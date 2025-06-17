@@ -11,11 +11,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    # This sets the default directory for ALL run steps in this job
-    defaults:
-      run:
-        working-directory: ./tutorial-task-android-app
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -31,25 +26,27 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        # Add a cache key that's specific to the subdirectory
         cache-dependency-path: tutorial-task-android-app/package-lock.json
 
-    # All subsequent 'run' commands will now automatically execute inside the 'tutorial-task-android-app' folder
     - name: Install dependencies
+      working-directory: ./tutorial-task-android-app
       run: npm ci
 
     - name: Build Next.js static site
+      working-directory: ./tutorial-task-android-app
       run: npm run build
 
     - name: Sync Capacitor project
-      run: npx cap sync android
+      working-directory: ./tutorial-task-android-app
+      run: ./node_modules/.bin/cap sync android
 
     - name: Build Android APK
-      # We still need to cd into the 'android' subdirectory for this one
-      run: cd android && ./gradlew assembleDebug
+      # Note: The working directory for this step is even deeper
+      working-directory: ./tutorial-task-android-app/android
+      run: ./gradlew assembleDebug
 
     - name: Upload to Appetize.io and Create Test Link
-      # This step must run from the root, so we override the default
+      # This step must run from the root, so we set the working directory back
       working-directory: ./
       run: |
         APK_PATH="tutorial-task-android-app/android/app/build/outputs/apk/debug/app-debug.apk"
