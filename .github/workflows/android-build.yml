@@ -1,20 +1,20 @@
 name: Build and Deploy to Appetize.io
 
 on:
-  # Triggers on push to main
   push:
     branches: [ main ]
-
-  # Triggers on pull requests to main
   pull_request:
     branches: [ main ]
-
-  # NEW: Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+
+    # This sets the default directory for ALL run steps in this job
+    defaults:
+      run:
+        working-directory: ./tutorial-task-android-app
 
     steps:
     - name: Checkout code
@@ -30,7 +30,11 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
+        cache: 'npm'
+        # Add a cache key that's specific to the subdirectory
+        cache-dependency-path: tutorial-task-android-app/package-lock.json
 
+    # All subsequent 'run' commands will now automatically execute inside the 'tutorial-task-android-app' folder
     - name: Install dependencies
       run: npm ci
 
@@ -38,14 +42,17 @@ jobs:
       run: npm run build
 
     - name: Sync Capacitor project
-      run: cd tutorial-task-android-app && npx cap sync android
+      run: npx cap sync android
 
     - name: Build Android APK
+      # We still need to cd into the 'android' subdirectory for this one
       run: cd android && ./gradlew assembleDebug
 
     - name: Upload to Appetize.io and Create Test Link
+      # This step must run from the root, so we override the default
+      working-directory: ./
       run: |
-        APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
+        APK_PATH="tutorial-task-android-app/android/app/build/outputs/apk/debug/app-debug.apk"
         API_TOKEN="${{ secrets.APPETIZE_API_TOKEN }}"
         
         RESPONSE=$(curl "https://api.appetize.io/v1/apps" -F "file=@$APK_PATH" -F "platform=android" -u "$API_TOKEN: ")
