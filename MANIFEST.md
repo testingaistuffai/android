@@ -13,7 +13,7 @@ This document provides a high-level overview of the application's architecture, 
 ### Data Models
 
 *   `src/app/features/task-list-feature/task.model.ts`: Defines the TypeScript `interface` for a `Task` object. This is the blueprint for our data.
-
+    
 ## Phase 2: Core Logic Services
 
 These services are located in `src/app/core-logic/`. In this Next.js adaptation, they are TypeScript classes instantiated by the UI layer.
